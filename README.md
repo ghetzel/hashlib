@@ -32,7 +32,7 @@ config.get('global.security.sslroot')
 config[:global][:security][:sslroot]
 ```
 
-However, let's say you attempted to get <code>config[:global][:adapters][:path]</code>.  You would get a nasty NilError because <pre>:adapters</pre> doesn't exist.  However, if you used <pre>config.get('global.adapters.path')</pre>, the result would just be <pre>nil</pre>.  _get_ also takes a second argument that let's you specify the default value if the given path is not found.  This lets you very easily work with rich nested hashes while also specifying sane defaults for missing values.
+However, let's say you attempted to get <code>config[:global][:adapters][:path]</code>.  You would get a nasty NilError because <code>:adapters</code> doesn't exist.  However, if you used <code>config.get('global.adapters.path')</code>, the result would just be <code>nil</code>.  _get_ also takes a second argument that let's you specify the default value if the given path is not found.  This lets you very easily work with rich nested hashes while also specifying sane defaults for missing values.
 
 
 set
