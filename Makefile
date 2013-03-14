@@ -1,0 +1,2 @@
+all:
+	gem build *.gemspec
