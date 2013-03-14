@@ -35,7 +35,7 @@ class Hash
         end
       end
 
-      return root || default
+      return (root.nil? ? default : root)
     rescue NoMethodError
       return default
     end
