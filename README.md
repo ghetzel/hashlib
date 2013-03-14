@@ -8,7 +8,8 @@ get
 
 The get method is used to allow for retrieval of a deeply-nested value in a hash structure.
 
-* Given:*
+Given:
+
 ```ruby
 config = {
   :global => {
