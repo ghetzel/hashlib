@@ -22,12 +22,12 @@ class Hash
 
       path.each do |p|
         x, key, subfield, subvalue = p.split(/([a-z0-9\@\_\-\+]+)(?:\[([^=]+)(?:=(.+))?\])?/i)
-        root = (root[key.to_sym] rescue nil)
+        root = (root[key.to_s] rescue nil)
         #puts key, root.inspect
 
         if subfield and root.is_a?(Array)
           root.each do |r|
-            if r.is_a?(Hash) and r[subfield.to_sym] and ( (subvalue && r[subfield.to_sym].to_s == subvalue) || true)
+            if r.is_a?(Hash) and r[subfield.to_s] and ( (subvalue && r[subfield.to_s].to_s == subvalue) || true)
               root = r
               break
             end
@@ -48,14 +48,14 @@ class Hash
     root = self
 
     path[0..-2].each do |p|
-      root[p.to_sym] = {} unless root[p.to_sym].is_a?(Hash)
-      root = root[p.to_sym]
+      root[p.to_s] = {} unless root[p.to_s].is_a?(Hash)
+      root = root[p.to_s]
     end
 
     if value
-      root[path.last.to_sym] = value
+      root[path.last.to_s] = value
     else
-      root.reject!{|k,v| k.to_sym == path.last.to_sym }
+      root.reject!{|k,v| k.to_s == path.last.to_s }
     end
 
     self
