@@ -16,6 +16,37 @@ class Hash
     root = self
 
     begin
+      path = path.to_s.split('.') unless path.is_a?(Array)
+
+      path.each do |key|
+        key = key.to_s
+
+        if root.is_a?(Array)
+          rv = nil
+
+          root.each do |r|
+            if r.has_key?(key)
+              rv = r[key]
+              break
+            end
+          end
+
+          root = rv
+        else
+          root = (root[key] rescue nil)
+        end
+      end
+
+      return (root.nil? ? default : root)
+    rescue NoMethodError
+      return default
+    end
+  end
+
+  def find(path, default=nil)
+    root = self
+
+    begin
       if not path.is_a?(Array)
         path = path.to_s.strip.scan(/[a-z0-9\@\_\-\+]+(?:\[[^\]]+\])?/).to_a
       end
