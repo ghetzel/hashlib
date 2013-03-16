@@ -17,11 +17,11 @@ class Hash
 
     begin
       if not path.is_a?(Array)
-        path = path.strip.scan(/[a-z0-9\@\_\-\+]+(?:\[[^\]]+\])?/).to_a
+        path = path.to_s.strip.scan(/[a-z0-9\@\_\-\+]+(?:\[[^\]]+\])?/).to_a
       end
 
       path.each do |p|
-        x, key, subfield, subvalue = p.split(/([a-z0-9\@\_\-\+]+)(?:\[([^=]+)(?:=(.+))?\])?/i)
+        x, key, subfield, subvalue = p.to_s.split(/([a-z0-9\@\_\-\+]+)(?:\[([^=]+)(?:=(.+))?\])?/i)
         root = (root[key.to_s] rescue nil)
         #puts key, root.inspect
 
