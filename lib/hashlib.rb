@@ -43,35 +43,6 @@ class Hash
     end
   end
 
-  def find(path, default=nil)
-    root = self
-
-    begin
-      if not path.is_a?(Array)
-        path = path.to_s.strip.scan(/[a-z0-9\@\_\-\+]+(?:\[[^\]]+\])?/).to_a
-      end
-
-      path.each do |p|
-        x, key, subfield, subvalue = p.to_s.split(/([a-z0-9\@\_\-\+]+)(?:\[([^=]+)(?:=(.+))?\])?/i)
-        root = (root[key.to_s] rescue nil)
-        #puts key, root.inspect
-
-        if subfield and root.is_a?(Array)
-          root.each do |r|
-            if r.is_a?(Hash) and r[subfield.to_s] and ( (subvalue && r[subfield.to_s].to_s == subvalue) || true)
-              root = r
-              break
-            end
-          end
-        end
-      end
-
-      return (root.nil? ? default : root)
-    rescue NoMethodError
-      return default
-    end
-  end
-
   def set(path, value)
     if not path.is_a?(Array)
       path = path.strip.split(/[\/\.]/)
@@ -159,5 +130,60 @@ class Hash
     end
 
     self
+  end
+end
+
+class Array
+  def count_distinct(group_by=[])
+    rv = {}
+
+    self.each do |i|
+      if i.is_a?(Hash)
+        components = group_by
+        components = components.collect{|j| i.get(j) }
+        path = []
+        stack = []
+
+        components.compact.each do |c|
+          if c.is_a?(Array)
+            path += [stack].product(c.flatten).collect{|i| i.flatten }
+            stack = []
+          else
+            stack << c
+          end
+        end
+
+        path = [components] if path.empty?
+
+        path.each do |parts|
+          parts[-1] = :null if parts[-1].nil?
+          rv.set(parts, rv.get(parts, 0) + 1)
+        end
+      end
+    end
+
+
+    sum_children = proc do |sum, key, value|
+      if value.is_a?(Hash)
+        sum += value.inject(0){|s,(k,v)| sum_children.call(s,k,v) }
+      else
+        sum += value
+      end
+
+      sum
+    end
+
+    populate = proc do |rv, key, value|
+      i = ({
+        :id    => ((key.empty? or key.nil? or key == 'null') ? nil : key),
+        :count => (value.is_a?(Hash) ? value.inject(0){|s,(k,v)| sum_children.call(s,k,v) } : value)
+      })
+
+      i[:children] = value.inject([]){|s,(k,v)| populate.call(s,k,v) } if value.is_a?(Hash)
+      rv << i
+      rv
+    end
+
+    rv.inject([]){|s,(k,v)| populate.call(s,k,v) }
   end
 end
