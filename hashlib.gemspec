@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name        = 'hashlib'
-  s.version     = '0.0.9'
+  s.version     = '0.0.10'
   s.date        = '2013-03-14'
   s.summary     = "Useful utility methods for working with Ruby hashes"
   s.description = "Hashlib extends the base Ruby Hash class with new methods that offer useful functionality for working with hashes, specifically addressing handling of deeply-nested Hashes for representing rich object structures."

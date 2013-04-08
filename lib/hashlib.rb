@@ -54,10 +54,10 @@ class Hash
       root = root[p.to_s]
     end
 
-    if value
-      root[path.last.to_s] = value
-    else
+    if value.nil?
       root.reject!{|k,v| k.to_s == path.last.to_s }
+    else
+      root[path.last.to_s] = value
     end
 
     self
