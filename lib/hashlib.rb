@@ -45,7 +45,7 @@ class Hash
 
   def set(path, value)
     if not path.is_a?(Array)
-      path = path.strip.split(/[\/\.]/)
+      path = path.to_s.strip.split(/[\/\.]/)
     end
     root = self
 
@@ -105,7 +105,8 @@ class Hash
       if v.is_a?(Hash)
         each_recurse(v, path, &block)
       else
-        yield(k, v, path)
+        rv = yield(k, v, path)
+        root[k] = rv unless rv.nil?
       end
 
       path.pop
@@ -127,6 +128,8 @@ class Hash
       else
         unset(path) if _is_empty?(v)
       end
+
+      nil
     end
 
     self
