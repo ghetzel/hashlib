@@ -98,7 +98,7 @@ class Hash
     rv
   end
 
-  def each_recurse(root=self, path=[], &block)
+  def each_recurse(root=self, path=[], inplace=false, &block)
     root.each do |k,v|
       path << k
 
@@ -106,11 +106,15 @@ class Hash
         each_recurse(v, path, &block)
       else
         rv = yield(k, v, path)
-        root[k] = rv unless rv.nil?
+        root[k] = rv if inplace === true
       end
 
       path.pop
     end
+  end
+
+  def each_recurse!(root=self, path=[], &block)
+    each_recurse(root, path, true, &block)
   end
 
   def compact
