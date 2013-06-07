@@ -17,8 +17,11 @@ class Hash
 
   # make path an array if not already
     if not path.is_a?(Array)
-      path = path.split('.')
+      path = path.to_s.split('.')
     end
+
+  # stringify path components
+    path.collect!{|i| i.to_s }
 
   # step through path components...
     path.each_index do |i|
