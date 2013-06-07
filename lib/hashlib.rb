@@ -13,34 +13,54 @@ class Hash
   end
 
   def get(path, default=nil)
-    root = self
+    rv = self
 
-    begin
-      path = path.to_s.split('.') unless path.is_a?(Array)
-
-      path.each do |key|
-        key = key.to_s
-
-        if root.is_a?(Array)
-          rv = nil
-
-          root.each do |r|
-            if r.has_key?(key)
-              rv = r[key]
-              break
-            end
-          end
-
-          root = rv
-        else
-          root = (root[key] rescue nil)
-        end
-      end
-
-      return (root.nil? ? default : root)
-    rescue NoMethodError
-      return default
+  # make path an array if not already
+    if not path.is_a?(Array)
+      path = path.split('.')
     end
+
+  # step through path components...
+    path.each_index do |i|
+    # hashes: if the current path component is in the hash, set the pointer
+    #            and move on to the next path component
+    #         otherwise return default value
+    #
+      if rv.is_a?(Hash)
+        if rv.has_key?(path[i])
+          rv = rv[path[i]]
+          next
+        else
+          return default
+        end
+
+    # arrays: flatten into one array, iterate over it.  for each element:
+    #           if it is a hash, recurse into it from the next path component
+    #           otherwise return it
+    #         the resulant pointer should be fully populated from this point down
+    #
+      elsif rv.is_a?(Array)
+        rv = (rv.flatten.collect do |j|
+          if j.is_a?(Hash)
+            j.get(path[(i)..-1], default)
+          else
+            j
+          end
+        end).compact
+
+        next
+
+    # scalars: if we're still in this loop and trying to look for a path component
+    #          inside of a scalar value, then that won't exist and we just return default
+      else
+        return default
+      end
+    end
+
+    return default if rv.nil? or (rv.is_a?(Array) and rv.flatten.compact.empty?)
+
+  # good job! you made it here!
+    return rv
   end
 
   def set(path, value)
@@ -148,23 +168,27 @@ class Array
       if i.is_a?(Hash)
         components = group_by
         components = components.collect{|j| i.get(j) }
-        path = []
-        stack = []
+        components = [*components.first].product([*components.last])
 
-        components.compact.each do |c|
-          if c.is_a?(Array)
-            path += [stack].product(c.flatten).collect{|i| i.flatten }
-            stack = []
-          else
-            stack << c
+        components.each do |component|
+          path = []
+          stack = []
+
+          component.compact.each do |c|
+            if c.is_a?(Array)
+              path += [stack].product(c.flatten).collect{|i| i.flatten }
+              stack = []
+            else
+              stack << c
+            end
           end
-        end
 
-        path = [components] if path.empty?
+          path = [component] if path.empty?
 
-        path.each do |parts|
-          parts[-1] = :null if parts[-1].nil?
-          rv.set(parts, rv.get(parts, 0) + 1)
+          path.each do |parts|
+            parts[-1] = :null if parts[-1].nil?
+            rv.set(parts, rv.get(parts, 0) + 1)
+          end
         end
       end
     end
