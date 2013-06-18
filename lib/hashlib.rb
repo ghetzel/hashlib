@@ -168,7 +168,13 @@ class Hash
       if v.is_a?(Hash)
         v = v.stringify_keys()
       elsif v.is_a?(Array)
-        v = v.map(&:stringify_keys)
+        v = v.collect do |i|
+          if i.is_a?(Hash)
+            i.stringify_keys()
+          else
+            i
+          end
+        end
       end
 
       rv[k.to_s] = v
@@ -181,9 +187,15 @@ class Hash
     rv = {}
     each do |k, v|
       if v.is_a?(Hash)
-        v = v.stringify_keys()
+        v = v.symbolize_keys()
       elsif v.is_a?(Array)
-        v = v.map(&:stringify_keys)
+        v = v.collect do |i|
+          if i.is_a?(Hash)
+            i.symbolize_keys()
+          else
+            i
+          end
+        end
       end
 
       rv[(k.to_sym rescue k)] = v
