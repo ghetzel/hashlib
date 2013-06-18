@@ -165,15 +165,28 @@ class Hash
   def stringify_keys()
     rv = {}
     each do |k, v|
-      rv[k.to_s] = (v.is_a?(Hash) ? v.stringify_keys() : v)
+      if v.is_a?(Hash)
+        v = v.stringify_keys()
+      elsif v.is_a?(Array)
+        v = v.map(&:stringify_keys)
+      end
+
+      rv[k.to_s] = v
     end
+
     return rv
   end
 
   def symbolize_keys()
     rv = {}
     each do |k, v|
-      rv[(k.to_sym rescue k)] = (v.is_a?(Hash) ? v.symbolize_keys() : v)
+      if v.is_a?(Hash)
+        v = v.stringify_keys()
+      elsif v.is_a?(Array)
+        v = v.map(&:stringify_keys)
+      end
+
+      rv[(k.to_sym rescue k)] = v
     end
     return rv
   end
