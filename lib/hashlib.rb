@@ -161,6 +161,22 @@ class Hash
 
     self
   end
+
+  def stringify_keys()
+    rv = {}
+    each do |k, v|
+      rv[k.to_s] = (v.is_a?(Hash) ? v.stringify_keys() : v)
+    end
+    return rv
+  end
+
+  def symbolize_keys()
+    rv = {}
+    each do |k, v|
+      rv[(k.to_sym rescue k)] = (v.is_a?(Hash) ? v.symbolize_keys() : v)
+    end
+    return rv
+  end
 end
 
 class Array
