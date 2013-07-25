@@ -126,10 +126,10 @@ class Hash
       path << k
 
       if v.is_a?(Hash)
-        each_recurse(v, path, &block)
+        each_recurse(v, path, inplace, &block)
       else
         rv = yield(k, v, path)
-        root[k] = rv if inplace === true
+        self.set(path, rv) if inplace === true
       end
 
       path.pop
