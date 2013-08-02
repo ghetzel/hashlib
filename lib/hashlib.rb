@@ -30,9 +30,17 @@ class Hash
     #         otherwise return default value
     #
       if rv.is_a?(Hash)
-        if rv.has_key?(path[i])
+      # attempt lookup by string
+        if rv.keys.include?(path[i])
           rv = rv[path[i]]
           next
+
+      # attempt lookup by symbol
+        elsif (path[i].to_sym rescue nil).is_a?(Symbol) and rv.keys.include?(path[i].to_sym)
+          rv = rv[path[i].to_sym]
+          next
+
+      # you fail it
         else
           return default
         end
