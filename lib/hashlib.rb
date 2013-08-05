@@ -129,23 +129,33 @@ class Hash
     rv
   end
 
-  def each_recurse(root=self, path=[], inplace=false, &block)
-    root.each do |k,v|
-      path << k
+  def each_recurse(options={}, &block)
+    options[:root] = self if options[:root].nil?
+    options[:path] = [] if options[:path].nil?
+
+    options[:root].each do |k,v|
+      options[:path] << k
 
       if v.is_a?(Hash)
-        each_recurse(v, path, inplace, &block)
+        yield(k, v, options[:path]) if options[:intermediate] === true
+
+        each_recurse(options.merge({
+          :root => v,
+          :path => options[:path]
+        }), &block)
       else
-        rv = yield(k, v, path)
-        self.set(path, rv) if inplace === true
+        rv = yield(k, v, options[:path])
+        self.set(options[:path], rv) if options[:inplace] === true
       end
 
-      path.pop
+      options[:path].pop
     end
   end
 
-  def each_recurse!(root=self, path=[], &block)
-    each_recurse(root, path, true, &block)
+  def each_recurse!(options={}, &block)
+    each_recurse(options.merge({
+      :inplace => true
+    }), &block)
   end
 
   def compact
