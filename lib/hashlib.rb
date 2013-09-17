@@ -220,6 +220,9 @@ class Hash
     end
     return rv
   end
+
+  alias_method :set, :rset
+  alias_method :get, :rget
 end
 
 class Array
