@@ -13,6 +13,14 @@ class Hash
   end
 
   def get(path, default=nil)
+    rget(path, default)
+  end
+
+  def set(path, value)
+    rset(path, value)
+  end
+
+  def rget(path, default=nil)
     rv = self
 
   # make path an array if not already
@@ -74,7 +82,7 @@ class Hash
     return rv
   end
 
-  def set(path, value)
+  def rset(path, value)
     if not path.is_a?(Array)
       path = path.to_s.strip.split(/[\/\.]/)
     end
@@ -220,9 +228,6 @@ class Hash
     end
     return rv
   end
-
-  alias_method :set, :rset
-  alias_method :get, :rget
 end
 
 class Array
