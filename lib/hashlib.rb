@@ -138,7 +138,7 @@ class Hash
   end
 
   def each_recurse(options={}, &block)
-    options[:root] = self if options[:root].nil?
+    options[:root] = self.clone() if options[:root].nil?
     options[:path] = [] if options[:path].nil?
 
     options[:root].each do |k,v|
