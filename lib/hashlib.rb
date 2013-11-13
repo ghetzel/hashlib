@@ -21,89 +21,90 @@ class Hash
   end
 
   def rget(path, default=nil)
-    rv = self
+    path = path.split('.') if path.is_a?(String)
+    return default if path.nil? or path.empty?
 
-  # make path an array if not already
-    if not path.is_a?(Array)
-      path = path.to_s.split('.')
-    end
+  # arrayify all paths
+    path = [*path]
 
-  # stringify path components
-    path.collect!{|i| i.to_s }
+    root = self.stringify_keys()
+    key = path.first.to_s
+    rest = path[1..-1]
 
-  # step through path components...
-    path.each_index do |i|
-    # hashes: if the current path component is in the hash, set the pointer
-    #            and move on to the next path component
-    #         otherwise return default value
-    #
-      if rv.is_a?(Hash)
-      # attempt lookup by string
-        if rv.keys.include?(path[i])
-          rv = rv[path[i]]
-          next
-
-      # attempt lookup by symbol
-        elsif (path[i].to_sym rescue nil).is_a?(Symbol) and rv.keys.include?(path[i].to_sym)
-          rv = rv[path[i].to_sym]
-          next
-
-      # you fail it
+    if root.has_key?(key)
+      if root[key].is_a?(Hash)
+        if rest.empty?
+          return root[key]
         else
-          return default
+          return root[key].rget(rest, default)
         end
-
-    # arrays: flatten into one array, iterate over it.  for each element:
-    #           if it is a hash, recurse into it from the next path component
-    #           otherwise return it
-    #         the resulant pointer should be fully populated from this point down
-    #
-      elsif rv.is_a?(Array)
-        rv = (rv.flatten.collect do |j|
-          if j.is_a?(Hash)
-            j.get(path[(i)..-1], default)
-          else
-            j
-          end
-        end).compact
-
-        next
-
-    # scalars: if we're still in this loop and trying to look for a path component
-    #          inside of a scalar value, then that won't exist and we just return default
+      elsif root[key].is_a?(Array) and root[key].first.is_a?(Hash)
+        return root[key].collect{|v|
+          v.rget(rest, default)
+        }
       else
-        return default
+        return root[key]
       end
+    else
+      return default
     end
-
-    return default if rv.nil? or (rv.is_a?(Array) and rv.flatten.compact.empty?)
-
-  # good job! you made it here!
-    return rv
   end
 
-  def rset(path, value)
-    if not path.is_a?(Array)
-      path = path.to_s.strip.split(/[\/\.]/)
-    end
-    root = self
 
-    path[0..-2].each do |p|
-      root[p.to_s] = {} unless root[p.to_s].is_a?(Hash)
-      root = root[p.to_s]
+  def rset(path, value, options={})
+    path = path.split('.') if path.is_a?(String)
+    return nil if path.nil? or path.empty?
+
+  # arrayify all paths
+    path = [*path]
+
+    key = path.first.to_s
+    rest = path[1..-1]
+
+  # stringify the key we're processing
+    if (self.has_key?(key.to_sym) rescue false)
+      self[key] = self.delete(key.to_sym)
     end
 
-    if value.nil?
-      root.reject!{|k,v| k.to_s == path.last.to_s }
+    if rest.empty?
+      if options[:delete_nil] === true and value.nil?
+        self.delete(key)
+      else
+        self[key] = value
+      end
     else
-      root[path.last.to_s] = value
+      if self[key].is_a?(Array) and self[key].first.is_a?(Hash)
+      # set only on specific array items
+        if options[:index]
+          [*options[:index]].each do |i|
+            self[key][i].rset(rest, value, options.reject{|k|
+              k == :index
+            }) unless self[key][i].nil?
+          end
+
+      # set path on all array items
+        else
+          self[key] = self[key].collect{|v|
+            v.rset(rest, value, options)
+          }.compact
+        end
+      else
+        if not self[key].is_a?(Hash)
+          self[key] = {}
+        end
+
+        self[key].rset(rest, value, options)
+      end
+
     end
 
     self
   end
 
   def unset(path)
-    set(path, nil)
+    rset(path, nil, {
+      :delete_nil => true
+    })
   end
 
   def rekey(from, to)
@@ -138,32 +139,39 @@ class Hash
   end
 
   def each_recurse(options={}, &block)
-    options[:root] = self if options[:root].nil?
-    options[:path] = [] if options[:path].nil?
-
-    options[:root].each do |k,v|
-      options[:path] << k
+    self.inject({}) do |h, (k, v)|
+      path = [*options[:path]]+[k]
+      h[k] = v
 
       if v.is_a?(Hash)
-        yield(k, v, options[:path]) if options[:intermediate] === true
+        if options[:intermediate] === true
+          yield(k.to_s, v, path, h[k])
+        end
 
-        each_recurse(options.merge({
-          :root => v,
-          :path => options[:path]
+        v.each_recurse(options.merge({
+          :path => path
         }), &block)
+
+      elsif v.is_a?(Array) and v.first.is_a?(Hash)
+        v.each_index do |i|
+          if v[i].is_a?(Hash)
+            if options[:intermediate] === true
+              yield(k.to_s, v[i], path, h[k][i], i)
+            end
+
+            v[i].each_recurse(options.merge({
+              :path  => path,
+              :index => i
+            }), &block)
+          end
+        end
+
       else
-        rv = yield(k, v, options[:path])
-        self.set(options[:path], rv) if options[:inplace] === true
+        rv = yield(k.to_s, v, path, h, options[:index])
       end
 
-      options[:path].pop
+      h
     end
-  end
-
-  def each_recurse!(options={}, &block)
-    each_recurse(options.merge({
-      :inplace => true
-    }), &block)
   end
 
   def compact

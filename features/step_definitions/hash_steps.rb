@@ -2,38 +2,37 @@ Before do
   @hash = {}
 end
 
-Given /^I set a hash key '(.*)' to equal '(.*)'$/ do |key, value|
-  @hash.set(key, value)
+Given /^I set a hash key ([\:]?)'(.*)' to equal '(.*)'$/ do |sym, key, value|
+  @hash.set((sym == ':' ? key.to_sym : key), value)
 end
 
-Given /^I unset hash key '(.*)'/ do |key|
+Given /^I unset hash key ([\:]?)'(.*)'/ do |sym, key|
 # set two values
-  @hash.set(key, Time.now)
+  @hash.set((sym == ':' ? key.to_sym : key), Time.now)
   @hash.set("#{key}_test", Time.now)
 
 # unset one
   @hash.unset(key)
 end
 
-Given /^I rekey the key '(.*)' to '(.*)'$/ do |oldkey, newkey|
-  @hash.set(oldkey, Time.now)
-
-  @hash.rekey(oldkey, newkey)
+Given /^I rekey the key ([\:]?)'(.*)' to ([\:]?)'(.*)'$/ do |oldsym, oldkey, newsym, newkey|
+  @hash.set((oldsym == ':' ? oldkey.to_sym : oldkey), Time.now)
+  @hash.rekey((oldsym == ':' ? oldkey.to_sym : oldkey), (newsym == ':' ? newkey.to_sym : newkey))
 end
 
 
-Then /^I should see the key '(.*)' in the hash$/ do |key|
-  @hash.has_key?(key)
+Then /^I should see the key ([\:]?)'(.*)' in the hash$/ do |sym, key|
+  @hash.has_key?((sym == ':' ? key.to_sym : key))
 end
 
-Then /^I should not see the key '(.*)' in the hash$/ do |key|
-  not @hash.has_key?(key)
+Then /^I should not see the key ([\:]?)'(.*)' in the hash$/ do |sym, key|
+  @hash.get((sym == ':' ? key.to_sym : key)).nil?
 end
 
-Then /^I should see a hash {'(.*)' => '(.*)'}$/ do |key, value|
-  @hash.should == {key => value}
+Then /^I should see a hash {([\:]?)'(.*)' => '(.*)'}$/ do |sym, key, value|
+  @hash.should == {(sym == ':' ? key.to_sym : key) => value}
 end
 
-Then /^a get to '(.*)' should equal '(.*)'$/ do |key, value|
-  @hash.get(key).should == value
+Then /^a get to ([\:]?)'(.*)' should equal '(.*)'$/ do |sym, key, value|
+  @hash.get((sym == ':' ? key.to_sym : key)).should == value
 end
