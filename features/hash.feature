@@ -23,6 +23,14 @@ Feature: Hash Patches
 
     Given I rekey the key :'old' to :'new'
     Then I should see the key 'new' in the hash
+    Then I should see the key :'new' in the hash
     Then I should not see the key 'old' in the hash
     Then I should not see the key :'old' in the hash
-    Then I should not see the key :'new' in the hash
+
+  Scenario: Test Various Hashes
+    Given I get the key 'facets.counts.terms' from elastichash
+    Then I should see a Array of length 3 in the results
+
+    Given I get the key 'facets.counts.terms.term' from elastichash
+    Then I should see the array [online,allocatable,installing] in the results
+

@@ -39,9 +39,13 @@ class Hash
           return root[key].rget(rest, default)
         end
       elsif root[key].is_a?(Array) and root[key].first.is_a?(Hash)
-        return root[key].collect{|v|
-          v.rget(rest, default)
-        }
+        if rest.empty?
+          return root[key]
+        else
+          return root[key].collect{|v|
+            v.rget(rest, default)
+          }.flatten
+        end
       else
         return root[key]
       end
@@ -174,26 +178,12 @@ class Hash
     end
   end
 
-  def compact
-    def _is_empty?(i)
-      i === nil or (i.is_a?(String) and i.strip.chomp.empty?) or (i.respond_to?(:empty?) and i.empty?)
-    end
-
-    each_recurse do |k,v,path|
-      path = path.join('.')
-
-      if v.is_a?(Array)
-        v.reject!{|i| _is_empty?(i) }
-        unset(path) if v.empty?
-
-      else
-        unset(path) if _is_empty?(v)
+  def compact()
+    return each_recurse do |k,v,p,out|
+      if v.nil? or (v.respond_to?(:empty?) and v.empty?)
+        out.delete(p)
       end
-
-      nil
     end
-
-    self
   end
 
   def stringify_keys()
