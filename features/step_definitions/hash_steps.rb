@@ -1,8 +1,25 @@
-Before do
+Before('~@skip') do
   @hash = {}
   @results = nil
 
   @test_hashes = {
+    :recursehash => {
+      :id   => "abc123",
+      :name => "test-123",
+      :properties => {
+        :site => "test",
+        :network => {
+          :interfaces => [{
+            :name => "bond0"
+          },{
+            :name => "eth0"
+          },{
+            :name => "eth1"
+          }]
+        }
+      }
+    },
+
     :elastichash => {
       "took" => 1,
       "timed_out" => false,
@@ -56,6 +73,23 @@ Given /^I get the key ([\:]?)'(.*)' from (\S+)(?: with default ([\:]?)'(.*)')?$/
   @results = @test_hashes[hash.to_sym].rget((sym == ':' ? key.to_sym : key), (defsym == ':' ? default.to_sym : default))
 end
 
+Given /^I set the key ([\:]?)'(.*)' in (\S+) to '(.*)'$/ do |sym, key, hash, value|
+  @test_hashes[hash.to_sym].rset((sym == ':' ? key.to_sym : key), value)
+end
+
+Given /^I recurse through (\S+)$/ do |hash|
+  @results = @test_hashes[hash.to_sym].each_recurse do |k,v,p,o|
+
+  end
+end
+
+When /^I get ([\:]?)'(.*)' from the results$/ do |sym, key|
+  @results = @results.rget((sym == ':' ? key.to_sym : key))
+end
+
+When /^I get ([\:]?)'(.*)' from (\S+)$/ do |sym, key, hash|
+  @results = @test_hashes[hash.to_sym].rget((sym == ':' ? key.to_sym : key))
+end
 
 
 Then /^I should see the key ([\:]?)'(.*)' in the hash$/ do |sym, key|
@@ -80,10 +114,17 @@ Then /^I should see a (.*) of length (\d+) in the results$/ do |klass, count|
   @results.length.should == count.to_i
 end
 
-Then /^I should see the array \[(.*)\] in the results$/ do |values|
+Then /^I should see the (unsorted)?\s*array \[(.*)\] in the results$/ do |sort, values|
   @results.is_a?(Array).should == true
-  (@results - values.split(/,\s*/)).empty?.should == true
+
+  if sort == 'unsorted'
+    @results.should == values.split(/,\s*/)
+  else
+    @results.sort.should == values.split(/,\s*/).sort
+  end
 end
+
+
 
 Then /^I should see the value ([\:]?)'(.*)' in the results$/ do |sym, value|
   @results.should == (sym == ':' ? value.to_sym : value)

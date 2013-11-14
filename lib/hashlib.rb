@@ -118,8 +118,13 @@ class Hash
 
   # arrayify all paths
     path = [*path]
-
     key = path.first.to_s
+
+    if key =~ /^([^\]]+)\[(\d+)\]$/
+      key = $1
+      index = $2.to_i
+    end
+
     rest = path[1..-1]
 
   # stringify the key we're processing
@@ -135,13 +140,11 @@ class Hash
       end
     else
       if self[key].is_a?(Array) and self[key].first.is_a?(Hash)
-      # set only on specific array items
-        if options[:index]
-          [*options[:index]].each do |i|
-            self[key][i].rset(rest, value, options.reject{|k|
-              k == :index
-            }) unless self[key][i].nil?
-          end
+      # set only on a specific array item
+      # key will be in the form key[0], key[1], key[n]
+      #
+        if not index.nil?
+          self[key][index].rset(rest, value, options) unless self[key][index].nil?
 
       # set path on all array items
         else
@@ -219,29 +222,34 @@ class Hash
         }), &block)
 
       elsif v.is_a?(Array) and v.first.is_a?(Hash)
-        v.each_index do |i|
-          if v[i].is_a?(Hash)
+        v.each.with_index do |vv,i|
+          if vv.is_a?(Hash)
+            pp = path[0..-2]+["#{path[-1]}[#{i}]"]
+
             if options[:intermediate] === true
-              yield(k.to_s, v[i], path, dhm, i)
+              yield(k.to_s, vv, pp, dhm)
             end
 
-            v[i].each_recurse(options.merge({
-              :path  => path,
-              :index => i,
+            vv.each_recurse(options.merge({
+              :path  => pp,
               :dhm   => dhm
             }), &block)
           end
         end
 
       else
-        rv = yield(k.to_s, v, path, dhm, options[:index])
+        yield(k.to_s, v, path, dhm)
       end
 
       h
     end
 
-  # apply any pending operations accumulated from the inject() loop and return
-    return dhm.apply()
+    if options[:dhm].nil?
+    # apply any pending operations accumulated from the inject() loop and return
+      return dhm.apply()
+    else
+      return rv
+    end
   end
 
   def compact()

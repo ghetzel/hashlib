@@ -41,3 +41,34 @@ Feature: Hash Patches
     Given I get the key 'facets.counts.terms.term' from elastichash
     Then I should see the array [online,allocatable,installing] in the results
 
+  Scenario: Test Array Instance Set All
+    Given I set the key 'properties.network.interfaces.name' in recursehash to 'lol'
+    When I get 'properties.network.interfaces.name' from recursehash
+    Then I should see the array [lol,lol,lol] in the results
+
+  Scenario: Test Array Instance Set 0
+    Given I set the key 'properties.network.interfaces[0].name' in recursehash to 'lol'
+    When I get 'properties.network.interfaces.name' from recursehash
+    Then I should see the unsorted array [lol,eth0,eth1] in the results
+
+  Scenario: Test Array Instance Set 1
+    Given I set the key 'properties.network.interfaces[1].name' in recursehash to 'lol'
+    When I get 'properties.network.interfaces.name' from recursehash
+    Then I should see the unsorted array [bond0,lol,eth1] in the results
+
+  Scenario: Test Array Instance Set 2
+    Given I set the key 'properties.network.interfaces[2].name' in recursehash to 'lol'
+    When I get 'properties.network.interfaces.name' from recursehash
+    Then I should see the unsorted array [bond0,eth0,lol] in the results
+
+  Scenario: Test Array Instance Set Out-of-bounds
+    Given I set the key 'properties.network.interfaces[3].name' in recursehash to 'lol'
+    When I get 'properties.network.interfaces.name' from recursehash
+    Then I should see the unsorted array [bond0,eth0,eth1] in the results
+
+
+  Scenario: Test each_recurse
+    Given I recurse through recursehash
+    When I get 'properties.network.interfaces.name' from the results
+    Then I should see the array [bond0,eth0,eth1] in the results
+
