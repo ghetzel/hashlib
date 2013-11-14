@@ -34,20 +34,32 @@ class Hash
     if root.has_key?(key)
       if root[key].is_a?(Hash)
         if rest.empty?
-          return root[key]
+          if root[key].nil?
+            return default
+          else
+            return root[key]
+          end
         else
           return root[key].rget(rest, default)
         end
       elsif root[key].is_a?(Array) and root[key].first.is_a?(Hash)
         if rest.empty?
-          return root[key]
+          if root[key].nil?
+            return default
+          else
+            return root[key]
+          end
         else
           return root[key].collect{|v|
             v.rget(rest, default)
           }.flatten
         end
       else
-        return root[key]
+        if root[key].nil?
+          return default
+        else
+          return root[key]
+        end
       end
     else
       return default
