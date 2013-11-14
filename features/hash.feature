@@ -27,7 +27,14 @@ Feature: Hash Patches
     Then I should not see the key 'old' in the hash
     Then I should not see the key :'old' in the hash
 
+
   Scenario: Test Various Hashes
+    Given I get the key 'insanely.unlikely.key' from elastichash with default 'nope'
+    Then I should see the value 'nope' in the results
+
+    Given I get the key 'insanely.unlikely.key' from elastichash with default :'auto'
+    Then I should see the value :'auto' in the results
+
     Given I get the key 'facets.counts.terms' from elastichash
     Then I should see a Array of length 3 in the results
 

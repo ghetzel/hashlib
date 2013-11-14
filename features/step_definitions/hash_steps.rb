@@ -52,8 +52,8 @@ Given /^I rekey the key ([\:]?)'(.*)' to ([\:]?)'(.*)'$/ do |oldsym, oldkey, new
   @hash.rekey((oldsym == ':' ? oldkey.to_sym : oldkey), (newsym == ':' ? newkey.to_sym : newkey))
 end
 
-Given /^I get the key ([\:]?)'(.*)' from (.*)$/ do |sym, key, hash|
-  @results = @test_hashes[hash.to_sym].rget((sym == ':' ? key.to_sym : key))
+Given /^I get the key ([\:]?)'(.*)' from (\S+)(?: with default ([\:]?)'(.*)')?$/ do |sym, key, hash, defsym, default|
+  @results = @test_hashes[hash.to_sym].rget((sym == ':' ? key.to_sym : key), (defsym == ':' ? default.to_sym : default))
 end
 
 
@@ -83,4 +83,8 @@ end
 Then /^I should see the array \[(.*)\] in the results$/ do |values|
   @results.is_a?(Array).should == true
   (@results - values.split(/,\s*/)).empty?.should == true
+end
+
+Then /^I should see the value ([\:]?)'(.*)' in the results$/ do |sym, value|
+  @results.should == (sym == ':' ? value.to_sym : value)
 end
