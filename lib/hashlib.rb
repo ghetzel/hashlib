@@ -1,3 +1,48 @@
+class DeferredHashManipulator
+  def initialize(hash)
+    @hash = hash
+    @ops = []
+  end
+
+  def set(path, value)
+    @ops << {
+      :type  => :set,
+      :path  => path,
+      :value => value
+    }
+  end
+
+  def unset(path)
+    @ops << {
+      :type  => :unset,
+      :path  => path
+    }
+  end
+
+  def peek()
+    @hash
+  end
+
+  def pending_operations()
+    @ops
+  end
+
+  def apply()
+    @ops.each do |op|
+      case op[:type]
+      when :set
+        @hash.rset(op[:path], op[:value])
+      when :unset
+        @hash.unset(op[:path])
+      end
+    end
+
+    @ops = []
+
+    @hash
+  end
+end
+
 class Hash
   def diff(other)
     self.keys.inject({}) do |memo, key|
@@ -155,45 +200,54 @@ class Hash
   end
 
   def each_recurse(options={}, &block)
-    self.inject({}) do |h, (k, v)|
+    rv = {}
+    dhm = (options[:dhm] || DeferredHashManipulator.new(rv))
+
+    self.inject(rv) do |h, (k, v)|
       path = [*options[:path]]+[k]
+
       h[k] = v
 
       if v.is_a?(Hash)
         if options[:intermediate] === true
-          yield(k.to_s, v, path, h[k])
+          yield(k.to_s, v, path, dhm)
         end
 
         v.each_recurse(options.merge({
-          :path => path
+          :path => path,
+          :dhm  => dhm
         }), &block)
 
       elsif v.is_a?(Array) and v.first.is_a?(Hash)
         v.each_index do |i|
           if v[i].is_a?(Hash)
             if options[:intermediate] === true
-              yield(k.to_s, v[i], path, h[k][i], i)
+              yield(k.to_s, v[i], path, dhm, i)
             end
 
             v[i].each_recurse(options.merge({
               :path  => path,
-              :index => i
+              :index => i,
+              :dhm   => dhm
             }), &block)
           end
         end
 
       else
-        rv = yield(k.to_s, v, path, h, options[:index])
+        rv = yield(k.to_s, v, path, dhm, options[:index])
       end
 
       h
     end
+
+  # apply any pending operations accumulated from the inject() loop and return
+    return dhm.apply()
   end
 
   def compact()
-    return each_recurse do |k,v,p,out|
+    return each_recurse do |k,v,p,dhm|
       if v.nil? or (v.respond_to?(:empty?) and v.empty?)
-        out.delete(p)
+        dhm.unset(p)
       end
     end
   end
