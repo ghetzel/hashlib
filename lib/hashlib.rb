@@ -67,7 +67,7 @@ class Hash
 
   def rget(path, default=nil)
     path = path.split('.') if path.is_a?(String)
-    return default if path.nil? or path.empty?
+    return default if path.nil? or (path.respond_to?(:empty?) and path.empty?)
 
   # arrayify all paths
     path = [*path]
