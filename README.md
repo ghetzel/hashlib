@@ -1,5 +1,8 @@
-Hashlib: Utility methods for Ruby Hashes
+[UNMAINTAINED] Hashlib: Utility methods for Ruby Hashes
 ========================================
+
+NOTE: This package is no longer being maintained.
+-------------------------------------------------
 
 Hashlib extends the base Ruby Hash class with new methods that offer useful functionality for working with hashes, specifically addressing handling of deeply-nested Hashes for representing rich object structures.
 
